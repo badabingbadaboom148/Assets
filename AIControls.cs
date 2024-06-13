@@ -88,7 +88,6 @@ public class AIControls : MonoBehaviour
                         {
                             missiles.target = closestSpottedShip.gameObject;
                             missiles.StartCoroutine(missiles.FireSalvo());
-                            Debug.Log("ai firing missiles");
                             isTargetSelected = true;
                             previousTarget = closestSpottedShip.gameObject; // Update the previous target
                         }

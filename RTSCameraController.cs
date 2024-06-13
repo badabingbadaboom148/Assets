@@ -68,7 +68,6 @@ public class RTSCameraController : MonoBehaviour
         scrollPos.y = Mathf.Clamp(scrollPos.y, minY, maxY);
         transform.position = scrollPos;
 
-        // Camera rotation with middle mouse button drag
         if (Input.GetMouseButtonDown(1))
         {
             isRotating = true;

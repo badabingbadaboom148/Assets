@@ -60,10 +60,6 @@ public class TeamController : MonoBehaviour
             // Set the initial position of the UI Image
             UpdateImagePosition(transform.position);
         }
-        else
-        {
-            Debug.LogError("Image prefab is not assigned!");
-        }
         if (isFriendly)
         {
             EnableRenderersAndParticles();
@@ -74,6 +70,10 @@ public class TeamController : MonoBehaviour
         if (button != null && GetComponent<UnitController>() != null)
         {
             button.onClick.AddListener(GetComponent<UnitController>().ButtonSelect);
+        }
+        if (imageInstance.GetComponent<EnemyTrackIcon>() != null)
+        {
+            imageInstance.GetComponent<EnemyTrackIcon>().trackParentObject = transform.gameObject;
         }
     }
 
@@ -93,18 +93,17 @@ public class TeamController : MonoBehaviour
             imageInstance.SetActive(false);
             isRendering = false;
         }
-        if (spottedShips.Count >= 1)
+        if (spottedShips.Count >= 1 && !isFriendly)
         {
             isSpotted = true;
             isRendering = true;
         }
-        if (spottedShips.Count == 0)
+        else if (spottedShips.Count == 0 && !isFriendly)
         {
             isSpotted = false;
             isRendering = false;
         }
         shipsSeeing = spottedShips.Count;
-        //isSelected = transform.GetComponent<UnitController>().isSelected;
     }
 
     void OnDestroy()

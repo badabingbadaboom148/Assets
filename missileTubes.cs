@@ -30,7 +30,6 @@ public class missileTubes : MonoBehaviour
         if (timeSince >= salvoCooldown)
         {
             isFiring = true;
-            Debug.Log("fire salvo");
             for (int i = 0; i < salvoSize; i++)
             {
                 if (currentIndex < tubes.Length)

@@ -10004,10 +10004,11 @@ MonoBehaviour:
   Target: {fileID: 0}
   health: 30
   damage: 1000
-  damageFragments: 100
+  damageFragments: 25
   shrapnelOverpen: {fileID: 4654038584689583655, guid: 09de2d2e3c4403c4e894e28378164c85, type: 3}
   _deviationAmount: 20
   _deviationSpeed: 0.5
+  canDeviate: 1
   SeekerAngle: 60
 --- !u!96 &5458203532727870456
 TrailRenderer:
@@ -10124,6 +10125,7 @@ MonoBehaviour:
   imageInstance: {fileID: 0}
   isFriendly: 0
   isSpotted: 0
+  isSelected: 0
   isDead: 0
   surfaceArea: 500
   numberOfLifeboats: 0

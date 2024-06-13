@@ -226,7 +226,6 @@ public class UnitController : MonoBehaviour
     {
         Debug.Log("Move button clicked!");
 
-        // Trigger ship movement only when the unit is selected
         if (isSelected && shipMovementController != null)
         {
             if (Input.GetMouseButtonDown(0))

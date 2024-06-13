@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using UnityEngine.Events;
+using System.Collections.Generic;
 public class airship : MonoBehaviour
 {
     public float moveSpeed = 5f;
@@ -48,9 +50,14 @@ public class airship : MonoBehaviour
 
     public float gunMaxRange;
 
+    private bool escapePressed = false;
+
     private AIControls aiControls;
 
     private MasterGunController masterGunController;
+
+    public GraphicRaycaster uiRaycaster;
+    public EventSystem eventSystem;
 
     public GameObject sfx;
     public AudioSource audioSource;
@@ -69,6 +76,8 @@ public class airship : MonoBehaviour
     }
     private void Start()
     {
+        uiRaycaster = GameObject.Find("MainCanvas").GetComponent<GraphicRaycaster>();
+        eventSystem = GameObject.Find("EventSystem").GetComponent<EventSystem>();
         airshipHP = GetComponent<airshipHealth>();
 
         lineRenderer = gameObject.AddComponent<LineRenderer>();
@@ -232,12 +241,11 @@ public class airship : MonoBehaviour
     private void Targeting()
     {
         MasterGunController masterGunController = transform.GetComponentInParent<MasterGunController>();
-        if (isMissileButtonClicked)
+        if (isMissileButtonClicked && transform.GetComponent<missileTubes>() != null)
         {
             missileTubes missileReloading = GetComponent<missileTubes>();
 
             Camera.main.transform.GetComponent<RTSCameraController>().escapeIsUsed = true;
-            Debug.Log("check");
 
             // Enable the localMissileTargetingImage
             localMissileTargetingImage.transform.gameObject.SetActive(true);
@@ -267,6 +275,43 @@ public class airship : MonoBehaviour
 
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
+            // Get the mouse position in screen space
+            Vector3 mousePosition = Input.mousePosition;
+
+            // Create a PointerEventData object
+            PointerEventData pointerEventData = new PointerEventData(eventSystem);
+            pointerEventData.position = mousePosition;
+
+            // Create a list to hold the results
+            List<RaycastResult> results = new List<RaycastResult>();
+
+            // Raycast the UI
+            uiRaycaster.Raycast(pointerEventData, results);
+
+            // Process the results
+            foreach (RaycastResult result in results)
+            {
+                if (result.gameObject.layer != LayerMask.NameToLayer("UI")) continue;
+                if (result.gameObject.GetComponent<EnemyTrackIcon>() == null) continue;
+                // Calculate the screen-space position of the ship
+                Vector3 targetScreenPosition = Camera.main.WorldToScreenPoint(result.gameObject.GetComponent<EnemyTrackIcon>().trackParentObject.transform.position);
+
+                // Set the z-coordinate to a constant value
+                targetScreenPosition.z = 0; // Or any other desired value
+
+                // Set the position of the image
+                imageRectTransform.position = targetScreenPosition;
+
+                // Set the position of the line renderer
+                targetingLineRenderer.enabled = true;
+                targetingLineRenderer.SetPosition(0, transform.position);
+                targetingLineRenderer.SetPosition(1, result.gameObject.GetComponent<EnemyTrackIcon>().trackParentObject.transform.position);
+
+                // Display the distance
+                missileTargetingRange.text = "TRG RNG: =+" + Vector3.Distance(transform.position, result.gameObject.GetComponent<EnemyTrackIcon>().trackParentObject.transform.position) + "+=";
+                // Break after processing the first hit result
+                break;
+            }
             if (Physics.Raycast(ray, out hit, Mathf.Infinity, LayerMask.GetMask("Ship")))
             {
                 // Calculate the screen-space position of the ship
@@ -304,6 +349,48 @@ public class airship : MonoBehaviour
 
         if (Input.GetMouseButtonUp(1) && transform.GetComponent<UnitController>().isSelected && isMissileButtonClicked)
         {
+            // Convert mouse position to viewport coordinates
+            Vector3 cameraWorldPosition = Camera.main.ScreenToViewportPoint(Input.mousePosition);
+
+            // Calculate target position
+            Vector3 position = Camera.main.ViewportToScreenPoint(cameraWorldPosition);
+            RectTransform imageRectTransform = localMissileTargetingImage.GetComponent<RectTransform>();
+            imageRectTransform.position = position;
+            Vector3 mousePosition = Input.mousePosition;
+
+            // Create a PointerEventData object
+            PointerEventData pointerEventData = new PointerEventData(eventSystem);
+            pointerEventData.position = mousePosition;
+            List<RaycastResult> results = new List<RaycastResult>();
+            uiRaycaster.Raycast(pointerEventData, results);
+
+            // Process the results
+            foreach (RaycastResult result in results)
+            {
+                if (result.gameObject.layer != LayerMask.NameToLayer("UI")) continue;
+                if (result.gameObject.GetComponent<EnemyTrackIcon>() == null) continue;
+                missileTubes missileTubes = transform.GetComponent<missileTubes>();
+                if (missileTubes != null)
+                {
+                    missileTubes.target = result.gameObject.GetComponent<EnemyTrackIcon>().trackParentObject;
+                    missileTubes.StartCoroutine(missileTubes.FireSalvo());
+                    isMissileButtonClicked = false;
+                    localMissileTargetingImage.transform.gameObject.SetActive(false);
+                    targetingLineRenderer.enabled = false;
+                    if (audioSource != null && GetComponent<UnitController>().finalizationSoundEffect != null)
+                    {
+                        // Set the AudioClip to play
+                        audioSource.clip = transform.GetComponent<UnitController>().finalizationSoundEffect;
+
+                        // Play the audio clip
+                        audioSource.Play();
+                    }
+                    sfx.GetComponent<UI_SFXManager>().PlayRandomVoiceline();
+                    Camera.main.transform.GetComponent<RTSCameraController>().escapeIsUsed = false;
+                    return; // Exit early after setting isMissileButtonClicked to false
+                }
+                break;
+            }
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, Mathf.Infinity, LayerMask.GetMask("Ship")))
@@ -331,6 +418,7 @@ public class airship : MonoBehaviour
         }
         if (isGunButtonClicked)
         {
+            Camera.main.transform.GetComponent<RTSCameraController>().escapeIsUsed = true;
             // Enable the localMissileTargetingImage
             localGunTargetingImage.transform.gameObject.SetActive(true);
 
@@ -348,6 +436,55 @@ public class airship : MonoBehaviour
 
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
+            // Get the mouse position in screen space
+            Vector3 mousePosition = Input.mousePosition;
+
+            // Create a PointerEventData object
+            PointerEventData pointerEventData = new PointerEventData(eventSystem);
+            pointerEventData.position = mousePosition;
+
+            // Create a list to hold the results
+            List<RaycastResult> results = new List<RaycastResult>();
+
+            // Raycast the UI
+            uiRaycaster.Raycast(pointerEventData, results);
+
+            // Process the results
+            foreach (RaycastResult result in results)
+            {
+                if (result.gameObject.layer != LayerMask.NameToLayer("UI")) continue;
+                if (result.gameObject.GetComponent<EnemyTrackIcon>() == null) continue;
+                Debug.Log("Hit UI Element: " + result.gameObject.name);
+                Transform hitTransform = result.gameObject.transform;
+
+                // Calculate the screen-space position of the ship
+                Vector3 targetScreenPosition = Camera.main.WorldToScreenPoint(hitTransform.GetComponent<EnemyTrackIcon>().trackParentObject.transform.position);
+
+                // Set the z-coordinate to a constant value
+                targetScreenPosition.z = 0; // Or any other desired value
+
+                // Set the position of the image
+                imageRectTransform.position = targetScreenPosition;
+
+                // Set the position of the line renderer
+                targetingLineRenderer.enabled = true;
+                targetingLineRenderer.SetPosition(0, transform.position);
+                targetingLineRenderer.SetPosition(1, hitTransform.GetComponent<EnemyTrackIcon>().trackParentObject.transform.position);
+
+                // Display the distance
+                gunTargetingRange.text = "TRG RNG: =+" + Vector3.Distance(transform.position, hitTransform.GetComponent<EnemyTrackIcon>().trackParentObject.transform.position) + "+=";
+                if (Vector3.Distance(transform.position, hitTransform.GetComponent<EnemyTrackIcon>().trackParentObject.transform.position) > gunMaxRange)
+                {
+                    gunRangeWarning.gameObject.SetActive(true);
+                }
+                else
+                {
+                    gunRangeWarning.gameObject.SetActive(false);
+                }
+
+                // Break after processing the first hit result
+                break;
+            }
             if (Physics.Raycast(ray, out hit, Mathf.Infinity, LayerMask.GetMask("Ship")))
             {
                 // Calculate the screen-space position of the ship
@@ -380,24 +517,71 @@ public class airship : MonoBehaviour
                 targetingLineRenderer.enabled = false;
                 gunTargetingRange.text = "TRG RNG: =++=";
             }
-            if (Input.GetKey(KeyCode.Escape) && isGunButtonClicked)
+            if (Input.GetKeyDown(KeyCode.Escape) && isGunButtonClicked)
             {
-                isGunButtonClicked = false;
-                targetingLineRenderer.enabled = false;
-                gunTargetingRange.text = "TRG RNG: =++=";
-                localGunTargetingImage.transform.gameObject.SetActive(false);
-                return;
+                if (!escapePressed)
+                {
+                    Camera.main.transform.GetComponent<RTSCameraController>().escapeIsUsed = false;
+                    isGunButtonClicked = false;
+                    targetingLineRenderer.enabled = false;
+                    gunTargetingRange.text = "TRG RNG: =++=";
+                    localGunTargetingImage.transform.gameObject.SetActive(false);
+                    escapePressed = true;
+                }
+                else
+                {
+                    // Second escape press: pause the game
+                    Camera.main.transform.GetComponent<RTSCameraController>().PauseGame();
+                }
             }
         }
         if (Input.GetMouseButtonUp(1) && transform.GetComponent<UnitController>().isSelected && isGunButtonClicked)
         {
-            Debug.Log("check 2");
-            // Raycast to determine the target object on the "Ship" layer
+            // Convert mouse position to viewport coordinates
+            Vector3 cameraWorldPosition = Camera.main.ScreenToViewportPoint(Input.mousePosition);
+
+            // Calculate target position
+            Vector3 position = Camera.main.ViewportToScreenPoint(cameraWorldPosition);
+            RectTransform imageRectTransform = localGunTargetingImage.GetComponent<RectTransform>();
+            imageRectTransform.position = position;
+            Vector3 mousePosition = Input.mousePosition;
+
+            // Create a PointerEventData object
+            PointerEventData pointerEventData = new PointerEventData(eventSystem);
+            pointerEventData.position = mousePosition;
+            List<RaycastResult> results = new List<RaycastResult>();
+            uiRaycaster.Raycast(pointerEventData, results);
+
+            // Process the results
+            foreach (RaycastResult result in results)
+            {
+                if (result.gameObject.layer != LayerMask.NameToLayer("UI")) continue;
+                if (result.gameObject.GetComponent<EnemyTrackIcon>() == null) continue;
+                if (masterGunController != null && isGunButtonClicked)
+                {
+                    // Assign the mainTarget and secondaryTarget to the hit object
+                    masterGunController.SetTargets(result.gameObject.GetComponent<EnemyTrackIcon>().trackParentObject);
+                    isGunButtonClicked = false;
+                    localGunTargetingImage.transform.gameObject.SetActive(false);
+                    targetingLineRenderer.enabled = false;
+                    if (audioSource != null && GetComponent<UnitController>().finalizationSoundEffect != null)
+                    {
+                        // Set the AudioClip to play
+                        audioSource.clip = transform.GetComponent<UnitController>().finalizationSoundEffect;
+
+                        // Play the audio clip
+                        audioSource.Play();
+                    }
+                    sfx.GetComponent<UI_SFXManager>().PlayRandomVoiceline();
+                    Camera.main.transform.GetComponent<RTSCameraController>().escapeIsUsed = false;
+                    return;
+                }
+                break;
+            }
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, Mathf.Infinity, LayerMask.GetMask("Ship")) && isGunButtonClicked)
             {
-                // Check if the hit object or its parent has a MasterGunController
                 if (masterGunController != null && isGunButtonClicked)
                 {
                     // Assign the mainTarget and secondaryTarget to the hit object
@@ -414,8 +598,15 @@ public class airship : MonoBehaviour
                         audioSource.Play();
                     }
                     sfx.GetComponent<UI_SFXManager>().PlayRandomVoiceline();
+                    Camera.main.transform.GetComponent<RTSCameraController>().escapeIsUsed = false;
                     return;
                 }
+            }
+            else
+            {
+                isGunButtonClicked = false;
+                localGunTargetingImage.transform.gameObject.SetActive(false);
+                targetingLineRenderer.enabled = false;
             }
         }
         if (!transform.GetComponent<UnitController>().isSelected)

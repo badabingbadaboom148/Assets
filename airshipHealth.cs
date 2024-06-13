@@ -143,22 +143,30 @@ public class airshipHealth : MonoBehaviour
                 healthCubesAreShowing = false;
             }
         }
-        if (healthCubesAreShowing)
+        if (healthCubesAreShowing && Input.GetKeyDown(KeyCode.Tab) && unitController.isSelected)
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit[] hits = Physics.RaycastAll(ray, Mathf.Infinity, LayerMask.GetMask("Ship"));
-            bool hitFound = false;
 
             foreach (RaycastHit hit in hits)
             {
                 componentHealth target = hit.collider.GetComponent<componentHealth>();
-                if (hit.collider.tag == "Ship" && target != null && target.healthCube != null)
+                if (target != null && target.healthCube != null)
                 {
                     healthDisplayText(hit.collider.gameObject);
-                    hitFound = true;
-                    floatingTextPrefab.SetActive(hitFound);
+                    floatingTextPrefab.SetActive(true);
+                    break;
+                }
+                else
+                {
+                    floatingTextPrefab.SetActive(false);
+                    break;
                 }
             }
+        }
+        else
+        {
+            floatingTextPrefab.SetActive(false);
         }
     }
     IEnumerator DelayedExplode(Transform gun)

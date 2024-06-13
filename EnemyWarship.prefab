@@ -147,6 +147,9 @@ GameObject:
   - component: {fileID: 8540500788930761644}
   - component: {fileID: 8540500788930761647}
   - component: {fileID: -6635119932154950894}
+  - component: {fileID: 9149749195622376199}
+  - component: {fileID: -8965829553199168946}
+  - component: {fileID: 2824536193012639695}
   m_Layer: 5
   m_Name: EnemyWarship
   m_TagString: Untagged
@@ -256,4 +259,54 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 8540500788930761647}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!65 &9149749195622376199
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8540500788930761646}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 99.90343, y: 171.10007, z: 1.9750855}
+  m_Center: {x: 0, y: 0, z: 1.8549514}
+--- !u!114 &-8965829553199168946
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8540500788930761646}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Delegates: []
+--- !u!114 &2824536193012639695
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8540500788930761646}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd5ead5fe7e874247ba1d472ef710f20, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

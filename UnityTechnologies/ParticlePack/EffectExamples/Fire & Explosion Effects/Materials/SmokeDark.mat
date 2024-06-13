@@ -9,7 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: SmokeDark
   m_Shader: {fileID: 4800000, guid: b7839dad95683814aa64166edc107ae2, type: 3}
-  m_ShaderKeywords: _FADING_ON _FLIPBOOKBLENDING_ON _SOFTPARTICLES_ON _SURFACE_TYPE_TRANSPARENT
+  m_ShaderKeywords: _FADING_ON _FLIPBOOKBLENDING_ON _RECEIVE_SHADOWS_OFF _SOFTPARTICLES_ON
+    _SURFACE_TYPE_TRANSPARENT
   m_LightmapFlags: 6
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -102,7 +103,7 @@ Material:
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _QueueOffset: 0
-    - _ReceiveShadows: 1
+    - _ReceiveShadows: 0
     - _Smoothness: 0
     - _SmoothnessTextureChannel: 0
     - _SoftParticlesEnabled: 1

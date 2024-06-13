@@ -62,7 +62,6 @@ public class MasterGunController : MonoBehaviour
             for (int k = 0; k < navalGunControllersArray[i].Main.Length; k++)
             {
                 navalGunControllersArray[i].Main[k].target = null;
-                Debug.Log("check 2");
             }
         }
     }

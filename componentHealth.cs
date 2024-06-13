@@ -59,7 +59,7 @@ public class componentHealth : MonoBehaviour
         {
             Health -= damage;
             // Check for Fire debuff
-            if (Random.Range(0f, 100f) < fireDebuffChance && fireParticleSystem != null)
+            if (Random.Range(0f, 100f) < (fireDebuffChance) * (startingHealth / Health) && fireParticleSystem != null)
             {
                 ApplyFireDebuff();
             }
@@ -205,5 +205,4 @@ public class componentHealth : MonoBehaviour
             yield return null;
         }
     }
-
 }

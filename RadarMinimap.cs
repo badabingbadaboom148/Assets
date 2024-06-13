@@ -33,7 +33,6 @@ public class RadarMinimap : MonoBehaviour
     {
         foreach (TeamController ship in RadarScanner.ships)
         {
-            Debug.Log(RadarScanner.ships.Count);
             RawImage shipIcon = Instantiate(trackIcon, transform.position, transform.rotation);
             shipIcon.transform.SetParent(transform);
 

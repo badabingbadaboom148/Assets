@@ -21,22 +21,17 @@ public class RadarScanner : MonoBehaviour
     private void Start()
     {
         Missile.OnMissileDestroyed += HandleMissileDestroyed;
+        myTeamController = GetComponent<TeamController>();
     }
     private void FixedUpdate()
     {
         foreach (var ship in ships)
         {
-            if (ship == null)
-            {
-                ships.Remove(ship);
-                continue;
-            }
             TeamController teamController = ship.GetComponent<TeamController>();
-            if (teamController.isFriendly == transform.GetComponent<TeamController>().isFriendly)
+            if (teamController.isFriendly == myTeamController.isFriendly)
             {
                 continue;
             }
-
             Vector3 direction = ship.transform.position - transform.position;
             float distance = Vector3.Distance(transform.position, ship.transform.position);
 

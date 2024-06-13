@@ -186,16 +186,17 @@ public class Missile : MonoBehaviour {
 	// Guide missile towards target
 	private void GuideMissile()
 	{
-		AddDeviation();
+		CalculateRelativePosition();
 		SeekShip();
 	}
 	private void SeekShip()
 	{
-		float coneLength = 1500;
 		float detectionRadius = SeekerAngle / 2.0f; // Define the radius based on the seeker angle
 		int layerMask = LayerMask.GetMask("Ship"); // Define a layer mask for the ships
 
 		Collider[] hits = Physics.OverlapSphere(transform.position, detectionRadius, layerMask);
+
+		List<componentHealth> potentialTargets = new List<componentHealth>();
 
 		foreach (Collider hit in hits)
 		{
@@ -203,27 +204,31 @@ public class Missile : MonoBehaviour {
 			float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
 
 			if (hit.GetComponent<RadarScanner>() == null) continue;
-			if (hit.GetComponent<RadarScanner>() != null)
-			{
-				RaycastHit raycastHit;
-				if (Physics.Raycast(transform.position, directionToTarget, out raycastHit, coneLength))
-				{
-					componentHealth target = raycastHit.collider.GetComponent<componentHealth>();
-					TeamController isFriendly = raycastHit.collider.transform.root.GetComponent<TeamController>();
 
-					if (raycastHit.collider.CompareTag("Ship") && isFriendly.isFriendly != teamController.isFriendly && target != null)
-					{
-						Target = raycastHit.collider.transform;
-						guideRotation = Quaternion.LookRotation(directionToTarget, transform.up);
-						canDeviate = false; // Set canDeviate to false when a target is spotted
-						return; // Exit the method immediately after finding a valid target
-					}
-				}
-			}
+			// Find all children with the componentHealth script
+			FindAllComponentHealths(hit.transform, potentialTargets);
 		}
 
-		// If no target is found, add deviation
-		AddDeviation();
+		// Choose a random componentHealth target from the list
+		if (potentialTargets.Count > 0)
+		{
+			int randomIndex = UnityEngine.Random.Range(0, potentialTargets.Count);
+			Target = potentialTargets[randomIndex].transform;
+			Debug.Log("Target acquired: " + Target.name);
+		}
+		else
+		{
+			Debug.Log("No valid targets found.");
+		}
+	}
+
+	private void FindAllComponentHealths(Transform parent, List<componentHealth> list)
+	{
+		Debug.Log("hello");
+		foreach (Transform child in parent)
+		{
+			list.Add(child.GetComponent<componentHealth>());
+		}
 	}
 	private Vector3 previousTargetPosition;
 
@@ -246,16 +251,8 @@ public class Missile : MonoBehaviour {
 			// Store the current position of the target for the next frame
 			previousTargetPosition = Target.transform.position;
 
-			// Calculate a deviation vector
-			Vector3 deviation = new Vector3(UnityEngine.Random.Range(-_deviationAmount * 0.5f, _deviationAmount * 0.5f),
-											0,
-											0);
-
-			// Transform the deviation vector into world space and scale it by the deviation amount
-			Vector3 predictionOffset = transform.TransformDirection(deviation) * _deviationAmount;
-
 			// Adjust the relative position based on the predicted target position and deviation
-			currentRelativePosition = predictedTargetPosition - transform.position + predictionOffset;
+			currentRelativePosition = predictedTargetPosition - transform.position;
 
 			// Set the rotation based on the adjusted relative position
 			guideRotation = Quaternion.LookRotation(currentRelativePosition, transform.up);
@@ -294,45 +291,16 @@ public class Missile : MonoBehaviour {
 	}
 	private void SpawnDamageSphere(GameObject hitObject)
 	{
-		float damageConeAngle = 70f;
-		for (int i = 0; i < damageFragments; i++)
-		{
-			float halfConeAngle = damageConeAngle / 2.0f;
+		Collider[] surfaceDamageCollider = Physics.OverlapSphere(transform.position, 10);
+		foreach (Collider collider in surfaceDamageCollider)
+        {
+			componentHealth target = collider.GetComponent<componentHealth>();
 
-			// Generate random angles within the cone
-			float randomYaw = UnityEngine.Random.Range(-halfConeAngle, halfConeAngle);
-			float randomPitch = UnityEngine.Random.Range(-halfConeAngle, halfConeAngle);
-
-			// Create the random rotation
-			Quaternion randomRotation = Quaternion.Euler(randomPitch, randomYaw, 0);
-
-			// Apply the random rotation to the forward vector
-			Vector3 randomDirection = transform.rotation * randomRotation * transform.forward * -1;
-
-			// Calculate the raycast distance
-			float raycastDistance = 50;
-			Debug.Log(transform.forward);
-			// Perform the raycast
-			RaycastHit[] hits = Physics.RaycastAll(transform.position, randomDirection, raycastDistance, LayerMask.GetMask("Ship"));
-
-			foreach (RaycastHit hit in hits)
+			if (target != null)
 			{
-				// Check if the hit object has the "Ship" tag
-				if (hit.collider.CompareTag("Ship"))
-				{
-					componentHealth target = hit.collider.GetComponent<componentHealth>();
-
-					if (target != null && target.Health >= target.functionalThreshold)
-					{
-						float rayDamage = damage / damageFragments;
-						target.ApplyDamage(rayDamage);
-						Debug.Log("Applied damage: " + rayDamage);
-						Debug.DrawRay(transform.position, randomDirection * hit.distance, Color.green, 3f);
-						break;
-					}
-				}
+				target.ApplyDamage(damage / surfaceDamageCollider.Length);
+				break;
 			}
-			Debug.DrawRay(transform.position, randomDirection * 15, Color.red, 3f);
 		}
 	}
 }
