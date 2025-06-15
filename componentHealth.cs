@@ -142,14 +142,13 @@ public class componentHealth : MonoBehaviour
 
         // Instantiate and play the fire particle system
         
-        if (fireParticleSystem == null)
+        if (fireParticleSystem != null)
         {
             currentFirePS = Instantiate(fireParticleSystem, transform.position, transform.rotation);
             currentFirePS.transform.parent = transform.root;
             currentFirePS.transform.localScale = new Vector3(1, 1, 1);
             currentFirePS.Play();
         }
-        fireParticleSystem.Play();
         StartCoroutine(FireDebuffRoutine(debuffDuration));
     }
 
@@ -165,7 +164,10 @@ public class componentHealth : MonoBehaviour
         }
 
         // Stop the particle system after the debuff duration
-        fireParticleSystem.Stop();
+        if (fireParticleSystem != null)
+        {
+            fireParticleSystem.Stop();
+        }
         if (currentFirePS != null)
         {
             currentFirePS.Stop();
